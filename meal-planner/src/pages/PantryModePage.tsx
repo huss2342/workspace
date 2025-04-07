@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ingredient, Recipe, UserPreferences } from '../types';
 import IngredientInput from '../components/IngredientInput';
 import RecipeCard from '../components/RecipeCard';
@@ -11,12 +11,12 @@ const mockRecipes: Recipe[] = [
     name: 'Garlic Butter Chicken',
     description: 'Juicy chicken breasts cooked in a rich garlic butter sauce.',
     ingredients: [
-      { id: '1', name: 'Chicken breast', quantity: 2, unit: 'piece', category: 'Protein' },
-      { id: '2', name: 'Butter', quantity: 2, unit: 'tbsp', category: 'Dairy' },
-      { id: '3', name: 'Garlic', quantity: 3, unit: 'clove', category: 'Vegetables' },
-      { id: '4', name: 'Thyme', quantity: 1, unit: 'tsp', category: 'Spices' },
-      { id: '5', name: 'Salt', quantity: 0.5, unit: 'tsp', category: 'Spices' },
-      { id: '6', name: 'Black pepper', quantity: 0.25, unit: 'tsp', category: 'Spices' },
+      { id: '1', name: 'Chicken breast', quantity: 2, unit: 'piece' },
+      { id: '2', name: 'Butter', quantity: 2, unit: 'tbsp' },
+      { id: '3', name: 'Garlic', quantity: 3, unit: 'clove' },
+      { id: '4', name: 'Thyme', quantity: 1, unit: 'tsp' },
+      { id: '5', name: 'Salt', quantity: 0.5, unit: 'tsp' },
+      { id: '6', name: 'Black pepper', quantity: 0.25, unit: 'tsp' },
     ],
     instructions: [
       'Season chicken breasts with salt and pepper on both sides.',
@@ -43,13 +43,13 @@ const mockRecipes: Recipe[] = [
     name: 'Vegetable Stir Fry',
     description: 'A quick and healthy vegetable stir fry with a savory sauce.',
     ingredients: [
-      { id: '7', name: 'Broccoli', quantity: 1, unit: 'cup', category: 'Vegetables' },
-      { id: '8', name: 'Carrots', quantity: 2, unit: 'medium', category: 'Vegetables' },
-      { id: '9', name: 'Bell pepper', quantity: 1, unit: 'medium', category: 'Vegetables' },
-      { id: '10', name: 'Soy sauce', quantity: 2, unit: 'tbsp', category: 'Condiments' },
-      { id: '11', name: 'Garlic', quantity: 2, unit: 'clove', category: 'Vegetables' },
-      { id: '12', name: 'Ginger', quantity: 1, unit: 'tsp', category: 'Spices' },
-      { id: '13', name: 'Vegetable oil', quantity: 1, unit: 'tbsp', category: 'Oils' },
+      { id: '7', name: 'Broccoli', quantity: 1, unit: 'cup' },
+      { id: '8', name: 'Carrots', quantity: 2, unit: 'medium' },
+      { id: '9', name: 'Bell pepper', quantity: 1, unit: 'medium' },
+      { id: '10', name: 'Soy sauce', quantity: 2, unit: 'tbsp' },
+      { id: '11', name: 'Garlic', quantity: 2, unit: 'clove' },
+      { id: '12', name: 'Ginger', quantity: 1, unit: 'tsp' },
+      { id: '13', name: 'Vegetable oil', quantity: 1, unit: 'tbsp' },
     ],
     instructions: [
       'Cut all vegetables into bite-sized pieces.',
@@ -73,7 +73,10 @@ const mockRecipes: Recipe[] = [
 ];
 
 export default function PantryModePage() {
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => {
+    const saved = localStorage.getItem('pantry');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +88,20 @@ export default function PantryModePage() {
     cuisinePreferences: [],
   });
   
-  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>(() => {
+    const saved = localStorage.getItem('favoriteRecipes');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save ingredients to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('pantry', JSON.stringify(ingredients));
+  }, [ingredients]);
+
+  // Save favorite recipes to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('favoriteRecipes', JSON.stringify(favoriteRecipes));
+  }, [favoriteRecipes]);
 
   const handleAddIngredient = (ingredient: Ingredient) => {
     setIngredients([...ingredients, ingredient]);
@@ -173,7 +189,11 @@ export default function PantryModePage() {
         setFavoriteRecipes([...favoriteRecipes, recipe]);
         alert('Recipe added to favorites!');
       } else {
-        alert('This recipe is already in your favorites!');
+        // If recipe is already in favorites, ask if they want to remove it
+        if (window.confirm('This recipe is already in your favorites. Would you like to remove it?')) {
+          setFavoriteRecipes(favoriteRecipes.filter(r => r.id !== recipeId));
+          alert('Recipe removed from favorites!');
+        }
       }
     }
   };
@@ -195,7 +215,7 @@ export default function PantryModePage() {
     });
     
     setFavoriteRecipes(updatedFavorites);
-    alert('Thank you for your feedback! We'll use this to improve your recommendations.');
+    alert('Thank you for your feedback! We will use this to improve your recommendations.');
   };
 
   return (
@@ -220,7 +240,7 @@ export default function PantryModePage() {
                   existingIngredients={ingredients}
                 />
                 
-                <div className="mt-6">
+                <div className="mt-6 space-y-3">
                   <button
                     onClick={handleGenerateRecipes}
                     disabled={ingredients.length === 0 || loading}
@@ -237,6 +257,22 @@ export default function PantryModePage() {
                     ) : (
                       'Generate Recipes'
                     )}
+                  </button>
+                  <button
+                    onClick={() => setFavoriteRecipes([])}
+                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Clear Favorites
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to clear your pantry?')) {
+                        setIngredients([]);
+                      }
+                    }}
+                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Clear Pantry
                   </button>
                 </div>
                 
@@ -256,8 +292,9 @@ export default function PantryModePage() {
                 )}
               </div>
               
-              {/* Recipe results section */}
-              <div className="lg:col-span-2">
+              {/* Recipe results and favorites section */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Suggested Recipes */}
                 <div className="bg-white shadow rounded-lg p-6">
                   <h2 className="text-xl font-medium text-gray-900 mb-6">
                     {recipes.length > 0 
@@ -291,6 +328,38 @@ export default function PantryModePage() {
                       <h3 className="mt-2 text-sm font-medium text-gray-900">No recipes yet</h3>
                       <p className="mt-1 text-sm text-gray-500">
                         Add ingredients from your pantry and generate recipes.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Favorite Recipes */}
+                <div className="bg-white shadow rounded-lg p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-medium text-gray-900">Favorite Recipes</h2>
+                    <span className="text-sm text-gray-500">{favoriteRecipes.length} saved</span>
+                  </div>
+                  
+                  {favoriteRecipes.length > 0 ? (
+                    <div className="space-y-6">
+                      {favoriteRecipes.map((recipe) => (
+                        <RecipeCard
+                          key={recipe.id}
+                          recipe={recipe}
+                          onSave={() => handleSaveRecipe(recipe.id)}
+                          onFeedback={(rating, feedback) => handleFeedback(recipe.id, rating, feedback)}
+                          isFavorite={true}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No favorite recipes</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Save recipes you like to find them here!
                       </p>
                     </div>
                   )}

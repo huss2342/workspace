@@ -23,8 +23,6 @@ export default function IngredientInput({
   const [requestedIngredient, setRequestedIngredient] = useState('');
   
   const commonUnits = ['g', 'kg', 'oz', 'lb', 'cup', 'tbsp', 'tsp', 'ml', 'l', 'piece', 'slice'];
-  const commonCategories = ['Vegetables', 'Fruits', 'Grains', 'Protein', 'Dairy', 'Spices', 'Other'];
-  const [category, setCategory] = useState(commonCategories[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +33,7 @@ export default function IngredientInput({
       id: Date.now().toString(),
       name: name.trim(),
       quantity,
-      unit,
-      category
+      unit
     };
     
     onAddIngredient(newIngredient);
@@ -133,23 +130,7 @@ export default function IngredientInput({
               </select>
             </div>
             
-            <div className="sm:col-span-1">
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                Category
-              </label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
-              >
-                {commonCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+
           </div>
           
           <div className="mt-4">
@@ -174,7 +155,6 @@ export default function IngredientInput({
                   {ingredient.quantity} {ingredient.unit} {ingredient.name}
                 </span>
                 <div className="flex items-center space-x-4">
-                  <span className="text-xs text-gray-500">{ingredient.category}</span>
                   <button
                     onClick={() => onRemoveIngredient(ingredient.id)}
                     className="text-red-600 hover:text-red-800"
