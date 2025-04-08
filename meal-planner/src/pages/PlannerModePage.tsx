@@ -169,6 +169,7 @@ export default function PlannerModePage() {
     allergies: [],
     cuisinePreferences: [],
     calorieTarget: 2000,
+    includedMealTypes: [MealType.Breakfast, MealType.Lunch, MealType.Dinner, MealType.Snack],
     macroTargets: {
       protein: 150,
       carbs: 200,
